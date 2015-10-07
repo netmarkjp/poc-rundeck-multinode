@@ -1,0 +1,58 @@
+- hosts: all
+  sudo: yes
+  tasks:
+#    - yum: name=* state=latest
+    - yum: name=libselinux-python
+    - selinux: state=disabled
+    - yum: name=ntp
+    - service: name=ntpd state=started enabled=yes
+
+- name: hosts
+  hosts: all
+  sudo: yes
+  tasks:
+    - lineinfile: dest=/etc/hosts regexp="{{item.regexp}}" line="{{item.line}}"
+      with_items:
+        - regexp: ".* db01$"
+          line: "192.168.33.10 db01"
+        - regexp: ".* job01$"
+          line: "192.168.33.11 job01"
+        - regexp: ".* job02$"
+          line: "192.168.33.12 job02"
+
+- hosts: job*
+  sudo: yes
+  tasks:
+    - yum: name=epel-release
+    - yum: name="{{item}}" state=installed
+      with_items:
+        - pandoc
+        - java-1.7.0-openjdk
+    - yum: name=http://repo.rundeck.org/latest.rpm
+    - yum: name=rundeck
+    - template: src=templates/framework.properties.j2 dest=/etc/rundeck/framework.properties
+    - template: src=templates/rundeck-config.properties.j2 dest=/etc/rundeck/rundeck-config.properties
+
+    # webdav-logstore-plugin
+    - get_url: url=https://bintray.com/artifact/download/ahonor/rundeck-plugins/rundeck-webdav-logstore-plugin-2.1.0.jar dest=/var/lib/rundeck/libext/rundeck-webdav-logstore-plugin-2.1.0.jar
+
+    - service: name=rundeckd state=started enabled=yes
+
+- hosts: db*
+  sudo: yes
+  tasks:
+    - yum: name="{{item}}" state=installed
+      with_items:
+        - mariadb-server
+        - MySQL-python
+        - httpd
+    - service: name=mariadb state=started enabled=yes
+    - mysql_db: name=rundeck
+    - mysql_user: name=rundeckuser password=rundeckpassword host=% priv=rundeck.*:ALL state=present
+    - file: path=/var/www/webdav state=directory owner=apache group=apache mode=775
+    - file: path=/var/spool/webdav state=directory owner=apache group=apache mode=775
+    - template: src=templates/webdav.conf.j2 dest=/etc/httpd/conf.d/webdav.conf
+    - shell: htpasswd -bc /var/www/webdav.htpasswd rundeckuser rundeckpassword
+      args:
+        creates: /var/www/webdav.htpasswd
+    - service: name=httpd state=started enabled=yes

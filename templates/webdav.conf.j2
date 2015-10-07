@@ -1,0 +1,16 @@
+Alias /webdav /var/www/webdav
+
+DavLockDB /var/spool/webdav/lock
+
+<Directory /var/www/webdav>
+    Require all granted
+    Dav On
+    AuthType Basic
+    AuthName DAV
+    AuthUserFile /var/www/webdav.htpasswd
+    Options Indexes MultiViews
+    <RequireAny>
+        Require method GET POST OPTIONS
+        Require valid-user
+    </RequireAny>
+</Directory>

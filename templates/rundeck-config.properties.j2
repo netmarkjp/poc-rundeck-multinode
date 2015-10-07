@@ -1,0 +1,10 @@
+loglevel.default=INFO
+rdeck.base=/var/lib/rundeck
+
+rss.enabled=false
+grails.serverURL=http://{{ansible_enp0s8.ipv4.address}}:4440
+dataSource.dbCreate = update
+dataSource.url = jdbc:mysql://db01/rundeck?autoReconnect=true
+dataSource.username=rundeckuser
+dataSource.password=rundeckpassword
+rundeck.execution.logs.fileStoragePlugin=webdav-logstore

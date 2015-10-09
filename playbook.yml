@@ -37,6 +37,9 @@
     - get_url: url=https://bintray.com/artifact/download/ahonor/rundeck-plugins/rundeck-webdav-logstore-plugin-2.1.0.jar dest=/var/lib/rundeck/libext/rundeck-webdav-logstore-plugin-2.1.0.jar
 
     - service: name=rundeckd state=started enabled=yes
+    - authorized_key: user=rundeck key="{{lookup('file', 'files/id_rsa.pub')}}"
+    - file: path=/var/lib/rundeck/.ssh/id_rsa.pub state=absent
+    - copy: src=files/id_rsa dest=/var/lib/rundeck/.ssh/id_rsa owner=rundeck group=rundeck mode=600
 
 - hosts: db*
   sudo: yes
@@ -56,3 +59,6 @@
       args:
         creates: /var/www/webdav.htpasswd
     - service: name=httpd state=started enabled=yes
+
+    # for rundeck setting
+    - template: src=templates/node_resources.xml.j2 dest=/var/www/webdav/node_resources.xml

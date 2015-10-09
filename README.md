@@ -1,8 +1,6 @@
 poc-realtime-monitoring-dstat-graphite
 =========================================
 
-**POC IN PROGRESS ...**
-
 # Requirements
 
 - CentOS7 x86_64
